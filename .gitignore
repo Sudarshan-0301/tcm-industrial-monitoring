@@ -1,7 +1,7 @@
-.streamlit/secrets.toml
-TCM_Model.joblib
-*.csv
-*.xlsx
-*.xls
+node_modules/
+.next/
+.env*
+!.env.example
 __pycache__/
-.venv/
+*.pyc
+TCM_Model.joblib

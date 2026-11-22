@@ -1,40 +1,21 @@
-# TCM Industrial Monitoring
+# TCM Vercel migration
+This is a migration starter for a Next.js frontend, FastAPI inference API and Supabase database.
 
-Starter application for the MEcon MD-3030-EN retrofit multi-sensor tool condition monitoring project.
+## Deploy frontend
+Import `frontend/` as the Vercel project root. Framework: Next.js. Add `NEXT_PUBLIC_TCM_API_URL` pointing to the deployed API base URL.
 
-## Included
-- Industrial-style Streamlit dashboard
-- CSV / Excel upload and sensor channel plotting
-- Tool registration and single-operator manual timer interface
-- Supabase schema for tools, machining sessions, recordings and inspections
-- Model artifact presence check
-
-## Important current limitations
-- `TCM_Model.joblib` is included in this ZIP for local testing. It is intentionally ignored by Git because model binaries should not be committed to a public repository.
-- New/Old-Worn inference is integrated using 512-row non-overlapping windows and the model's stored sensor/feature schema. Incomplete trailing rows are ignored. Majority vote share is displayed as agreement, not probability or accuracy.
-- Timer transitions use database RPC functions to accumulate active cutting intervals across pause/resume. Test the SQL on a separate Supabase project before operational use.
-- This application analyses uploaded files; it does not stream live CNC data.
-- Do not expose Supabase service-role credentials in client code or a public repository.
-
-## Run locally
-1. Install Python 3.10 or later.
-2. Create a virtual environment.
-3. Install requirements: `pip install -r requirements.txt`
-4. Create `.streamlit/secrets.toml` from `.streamlit/secrets.toml.example`.
-5. Create a Supabase project and run `supabase_schema.sql` in its SQL Editor.
-6. Start: `streamlit run app.py`
-
-## Deploy
-1. Push this folder to a private GitHub repository.
-2. In Streamlit Community Cloud, deploy the repository and select `app.py`.
-3. Add `SUPABASE_URL` and `SUPABASE_KEY` in app Secrets.
-4. Add the model artifact through a secure deployment mechanism after the inference pipeline is validated.
-
-## Before operational use
-- Add authentication / network protection.
-- Use database-side RPC functions for atomic timer state transitions and exact accumulated cutting-time calculations.
-- Test browser refresh, disconnection, pause/resume, duplicate clicks and concurrent requests.
-- Back up database and recordings.
+## Deploy API
+Deploy `backend/` as a separate Vercel Python Function project with `backend/` as root. Set:
+- `MODEL_PATH` to the path of the securely supplied model artifact in the API runtime.
+- `TCM_APP_TOKEN` to a long random secret (optional in local dev; recommended in production).
+- `FRONTEND_ORIGIN` to the exact Vercel frontend origin.
+Do not commit the `.joblib` model to a public repository. For Vercel, note function package and execution limits; a model binary of this size must be tested in the selected deployment plan. If package size or runtime limits are exceeded, host FastAPI on a Python service such as Render/Railway instead.
 
 ## Model compatibility
-The supplied `TCM_Model.joblib` was serialized with scikit-learn 1.6.1. The requirements file pins scikit-learn to 1.6.1 to avoid incompatible deserialization with newer releases. Keep this version aligned when deploying.
+The supplied model was previously reported as serialized with scikit-learn 1.6.1. Backend pins 1.6.1. The API preserves the original `utils/model.py` feature names and extraction: mean, std, RMS, peak-to-peak, median, p90_p10, 512-row windows, majority vote. Prediction has not yet been smoke-tested against labelled recordings in this migration.
+
+## Database
+Run `supabase/schema.sql` in Supabase SQL Editor. This schema is an initial base; secure RLS policies and database RPC timer functions must be added and tested before production data is stored. Do not expose service-role keys in frontend code.
+
+## Current migration scope
+The frontend provides a responsive dashboard, file analysis endpoint, and classifier endpoint. Tool timer UI is intentionally disabled until server-side timer RPCs and secure persistence are implemented. Do not treat this as production-ready yet.
