@@ -1,0 +1,7 @@
+.streamlit/secrets.toml
+TCM_Model.joblib
+*.csv
+*.xlsx
+*.xls
+__pycache__/
+.venv/
